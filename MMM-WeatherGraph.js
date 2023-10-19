@@ -195,7 +195,7 @@ Module.register("MMM-WeatherGraph", {
     if (this.config.showWind) {
       var padding = document.createElement("span");
       padding.className = "dim";
-      padding.innerHTML = " &nbsp &nbsp ";
+      padding.innerHTML = " &nbsp";
       large.appendChild(padding);
 
       var windicon = document.createElement("span");
