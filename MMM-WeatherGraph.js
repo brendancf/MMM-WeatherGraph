@@ -33,6 +33,7 @@ Module.register("MMM-WeatherGraph", {
     showGraphLegend: true,
     precipitationGraphWidth: 400,
     precipitationGraphHeight: 0,
+    showGraphMarkers: false,
     showHotColdLines: true,
     showWind: true,
     showSunrise: true,
@@ -312,7 +313,7 @@ Module.register("MMM-WeatherGraph", {
 // ======= shade blocks for daylight hours  (grey=day, black=night)
     var now = new Date();
     now = Math.floor(now / 1000);    // current time in Unix format
-    var timeUnilSunrise;
+    var timeUntilSunrise;
     var timeUnilSunset;
     var sunrisePixels;    // daytime shade box location on graph
     var sunsetPixels;
@@ -325,22 +326,60 @@ Module.register("MMM-WeatherGraph", {
     }
 
     context.save();
-    for (i = 0; i < 3; i++) {                // 3 days ([0]..[2])
-      timeUnilSunrise = (this.weatherData.daily[i].sunrise - now);
-      timeUnilSunset  = (this.weatherData.daily[i].sunset - now);
 
-      if ((timeUnilSunrise < 0) && (i == 0)) {     
-        timeUnilSunrise = 0;       // sunrise has happened already today
+    var currentX = 0;
+    const nightColor = "#494a4e";
+    const dayColor = "#2a2b2f";
+
+    // seconds in day 86400
+    const maxDays = 3
+
+    for (i = 0; i < maxDays; i++) {                // 3 days ([0]..[2])
+      timeUntilSunrise = (this.weatherData.daily[i].sunrise - now)/60/60;
+      timeUntilSunset  = (this.weatherData.daily[i].sunset - now)/60/60;
+      var nextSunrise = this.weatherData.daily[i].sunrise + 86400; // just assume 1 day until next sunrise as default for last day we are showing
+      
+      if (i < maxDays) {
+        nextSunrise = this.weatherData.daily[i+1].sunrise/60/60;
       }
-      if ((timeUnilSunset < 0) && (i == 0)) {     
-        timeUnilSunset = 0;        // sunset has happened already today
+      
+      const sunrise = this.weatherData.daily[i].sunrise/60/60;
+      const sunset = this.weatherData.daily[i].sunset/60/60;
+
+      // Sunrise hasn't happened yet
+      if (i ==0 && timeUntilSunrise >= 0) {        
+        const width = timeUntilSunrise * stepSize;
+        context.fillStyle = nightColor;
+        context.fillRect(currentX, 0, width, height);
+        currentX += width;
       }
 
-      sunrisePixels = (timeUnilSunrise/60/60)*stepSize;
-      sunsetPixels  = (timeUnilSunset/60/60)*stepSize;
+      if (timeUntilSunset > 0) {     
+        // Daytime coloring
+        const hoursLeftInDay = i == 0 ? timeUntilSunset : (sunset - sunrise)
+        const width = (hoursLeftInDay)*stepSize;
 
-      context.fillStyle = "#323232";
-      context.fillRect(sunrisePixels, 0, (sunsetPixels-sunrisePixels), height);
+        context.fillStyle = dayColor;
+        context.fillRect(currentX, 0, width, height);
+        currentX += width;
+      }
+
+      // Evening coloring
+      var hoursUntilNextSunrise = 0
+
+      if (i == 0) {
+        if (timeUntilSunset < 0)
+          hoursUntilNextSunrise = nextSunrise - sunset + timeUntilSunset
+        else 
+          hoursUntilNextSunrise = nextSunrise - sunset
+      } else {
+        hoursUntilNextSunrise = nextSunrise - sunset
+      }
+      
+      const width = hoursUntilNextSunrise * stepSize;
+      context.fillStyle = nightColor;
+      context.fillRect(currentX, 0, width, height);
+      currentX += width;
     }
     context.restore();
 
@@ -391,6 +430,7 @@ Module.register("MMM-WeatherGraph", {
       context.save();
       context.beginPath();
       context.moveTo(0, height);
+
       var intensity;
       for (i = 0; i < data.length; i++) {
         intensity = 0;
@@ -406,10 +446,10 @@ Module.register("MMM-WeatherGraph", {
       context.lineTo(width, height);
       context.closePath();
 
-      context.strokeStyle = 'blue';
+      context.strokeStyle = '#c4dfe380';
       context.stroke();
 
-      context.fillStyle = 'blue';
+      context.fillStyle = '#c4dfe380';
       context.fill();
       context.restore();
 
@@ -431,13 +471,39 @@ Module.register("MMM-WeatherGraph", {
       context.lineTo(width, height);
       context.closePath();
 
-      context.strokeStyle = 'white';
+      context.strokeStyle = '#c392c180';
       context.stroke();
 
-      context.fillStyle = 'white';
+      context.fillStyle = '#c392c180';
       context.fill();
       context.restore();
     }
+
+
+
+// ========= graph of Cloud Cover
+if (this.config.showGraphCloud) {
+  var cloudGraphScale = height/110;
+
+  context.save();
+  context.beginPath();
+  context.moveTo(0, height);
+  
+  for (i = 0; i < data.length; i++) {
+    const y = height - ((this.weatherData.hourly[i].clouds * cloudGraphScale) + 5);
+    context.lineTo(i * stepSize, y);
+  }
+
+  context.lineTo(width, height);
+  context.closePath();
+
+  context.strokeStyle = this.config.graphCloudColor;
+  context.stroke();
+
+  context.fillStyle = this.config.graphCloudColor;
+  context.fill();
+  context.restore();
+}
 
 // ===== 6hr tick lines
     var tickCount = Math.round(width / (stepSize*6));
@@ -455,7 +521,6 @@ Module.register("MMM-WeatherGraph", {
 
 // ========= graph of temp
     if (this.config.showGraphTemp) {
-      var numMins = 60 * graphHours;     // minutes in graph
       var tempTemp;
 
       context.save();
@@ -476,31 +541,33 @@ Module.register("MMM-WeatherGraph", {
         context.lineTo( tempX, tempY );   // line from last hour to this hour
         context.stroke();
 
-        context.beginPath();
-        context.arc(tempX, tempY, 1 ,0,2*Math.PI);          // hour-dots
-        context.stroke();
+        if (this.config.showGraphMarkers) {
+          context.beginPath();
+          context.arc(tempX, tempY, 1 ,0,2*Math.PI);          // hour-dots
+          context.stroke();
+        }
       }
       context.restore();
 
-      var timeLabel;
-      for (i = 0; i < graphHours; i++) {     // text label for temperature on graph
-        if ((i % 2) == 1) {
-          tempX = (i * stepSizeTemp) - 5;
-          tempY = height - (this.weatherData.hourly[i].temp-precipGraphYMin)*precipGraphPixelsPerDegree-5;
-          tempTemp = Math.round( this.weatherData.hourly[i].temp );
+      if (this.config.showGraphMarkers) {
+        for (i = 0; i < graphHours; i++) {     // text label for temperature on graph
+          if ((i % 2) == 1) {
+            tempX = (i * stepSizeTemp) - 5;
+            tempY = height - (this.weatherData.hourly[i].temp-precipGraphYMin)*precipGraphPixelsPerDegree-5;
+            tempTemp = Math.round( this.weatherData.hourly[i].temp );
 
-          context.beginPath();
-          context.font = "10px Arial";
-          context.fillStyle = this.config.graphTempColor;
-          context.fillText( tempTemp, tempX, tempY );
-          context.stroke();
+            context.beginPath();
+            context.font = "10px Arial";
+            context.fillStyle = this.config.graphTempColor;
+            context.fillText( tempTemp, tempX, tempY );
+            context.stroke();
+          }
         }
       }
     }
 
 // ========= graph of wind
     if (this.config.showGraphWind) {
-      var numMins = 60 * graphHours;     // minutes in graph
       var tempWind;
 
       context.save();
@@ -527,26 +594,32 @@ Module.register("MMM-WeatherGraph", {
         context.lineTo( tempX, tempY );       // line from last hour to this hour
         context.stroke();
 
-        context.beginPath();
-        context.arc(tempX, tempY, 1 ,0,2*Math.PI);          // hour-dots
-        context.stroke();
+        if (this.config.showGraphMarkers) {
+          context.beginPath();
+          context.arc(tempX, tempY, 1 ,0,2*Math.PI);          // hour-dots
+          context.stroke();
+        }
       }
       context.restore();
 
       context.save();
-      for (i = 0; i < (graphHours); i++) {     // text label for wind on graph
-        if ((i % 2) == 1) {
-          tempX = (i * stepSizeTemp) - 5;
-          tempY = height - ((this.weatherData.hourly[i].wind_speed * windGraphScale) + 5 + 3);
-          tempWind = Math.round( this.weatherData.hourly[i].wind_speed );
 
-          context.beginPath();
-          context.font = "10px Arial";
-          context.fillStyle = this.config.graphWindColor;
-          context.fillText( tempWind, tempX, tempY );
-          context.stroke();
+      if (this.config.showGraphMarkers) {
+        for (i = 0; i < (graphHours); i++) {     // text label for wind on graph
+          if ((i % 2) == 1) {
+            tempX = (i * stepSizeTemp) - 5;
+            tempY = height - ((this.weatherData.hourly[i].wind_speed * windGraphScale) + 5 + 3);
+            tempWind = Math.round( this.weatherData.hourly[i].wind_speed );
+
+            context.beginPath();
+            context.font = "10px Arial";
+            context.fillStyle = this.config.graphWindColor;
+            context.fillText( tempWind, tempX, tempY );
+            context.stroke();
+          }
         }
       }
+
       context.restore();
     }
 
@@ -574,76 +647,33 @@ Module.register("MMM-WeatherGraph", {
 
         context.lineTo( tempX, tempY );       // line from last hour to this hour
         context.stroke();
-
-        context.beginPath();
-        context.arc(tempX, tempY, 1 ,0,2*Math.PI);          // hour-dots
-        context.stroke();
-      }
-      context.restore();
-
-      context.save();
-      for (i = 0; i < (graphHours); i++) {     // text label 
-        if ((i % 2) == 1) {
-          tempX = (i * stepSizeTemp) - 5;
-          tempY = height - ((this.weatherData.hourly[i].humidity * humidGraphScale) + 5 + 3);
-          tempHumid = Math.round( this.weatherData.hourly[i].humidity );
-
+  
+        if (this.config.showGraphMarkers) {
           context.beginPath();
-          context.font = "10px Arial";
-          context.fillStyle = this.config.graphHumidColor;
-          context.fillText( tempHumid, tempX, tempY );
+          context.arc(tempX, tempY, 1 ,0,2*Math.PI);          // hour-dots
           context.stroke();
         }
       }
       context.restore();
-    }
 
-// ========= graph of Cloud Cover
-    if (this.config.showGraphCloud) {
-      var numMins = 60 * graphHours;     // minutes in graph
-      var tempHumid;
+      if (this.config.showGraphMarkers) {
+        context.save();
 
-      context.save();
-      context.strokeStyle = this.config.graphCloudColor;
-      context.lineWidth = 1;
+        for (i = 0; i < (graphHours); i++) {     // text label 
+          if ((i % 2) == 1) {
+            tempX = (i * stepSizeTemp) - 5;
+            tempY = height - ((this.weatherData.hourly[i].humidity * humidGraphScale) + 5 + 3);
+            tempHumid = Math.round( this.weatherData.hourly[i].humidity );
 
-      context.beginPath();
-      context.moveTo(0, height);
-
-      var stepSizeTemp = Math.round(width / (graphHours-1));
-      var tempX;
-      var tempY;
-
-      var cloudGraphScale = height/110;
-
-      for (i = 0; i < (graphHours); i++) {    // line graph
-        tempX = i * stepSizeTemp;
-        tempY = height - ((this.weatherData.hourly[i].clouds * cloudGraphScale) + 5);
-
-        context.lineTo( tempX, tempY );       // line from last hour to this hour
-        context.stroke();
-
-        context.beginPath();
-        context.arc(tempX, tempY, 1 ,0,2*Math.PI);          // hour-dots
-        context.stroke();
-      }
-      context.restore();
-
-      context.save();
-      for (i = 0; i < (graphHours); i++) {     // text label 
-        if ((i % 2) == 1) {
-          tempX = (i * stepSizeTemp) - 5;
-          tempY = height - ((this.weatherData.hourly[i].clouds * cloudGraphScale) + 5 + 3);
-          tempCloud = Math.round( this.weatherData.hourly[i].clouds );
-
-          context.beginPath();
-          context.font = "10px Arial";
-          context.fillStyle = this.config.graphCloudColor;
-          context.fillText( tempCloud, tempX, tempY );
-          context.stroke();
+            context.beginPath();
+            context.font = "10px Arial";
+            context.fillStyle = this.config.graphHumidColor;
+            context.fillText( tempHumid, tempX, tempY );
+            context.stroke();
+          }
         }
+        context.restore();
       }
-      context.restore();
     }
 
 
