@@ -332,6 +332,7 @@ Module.register("MMM-WeatherGraph", {
     const dayColor = "#2a2b2f";
 
     // seconds in day 86400
+    const secondsInDay = 86400
     const maxDays = 3
 
     for (i = 0; i < maxDays; i++) {                // 3 days ([0]..[2])
@@ -381,6 +382,7 @@ Module.register("MMM-WeatherGraph", {
       context.fillRect(currentX, 0, width, height);
       currentX += width;
     }
+
     context.restore();
 
 // ====== scale graph for units
@@ -505,8 +507,34 @@ if (this.config.showGraphCloud) {
   context.restore();
 }
 
+// ====== Day divider tick lines
+
+    context.save();
+    context.beginPath();
+    context.strokeStyle = '#66676a';
+    context.fillStyle = '#66676a';
+    context.lineWidth = 1;
+
+
+    // dt is noon on date
+    const startOfDay = this.weatherData.daily[0].dt - (secondsInDay / 2)
+    const timeSinceStartOfDay = now - startOfDay
+    const timeToEndOfDay = secondsInDay - timeSinceStartOfDay
+    var midnightTime = timeToEndOfDay
+
+    for (i = 0; i < maxDays; i++) { 
+      const midnightX = midnightTime/60/60 * stepSize
+                
+      context.moveTo(midnightX, 0);
+      context.lineTo(midnightX, height);
+      context.stroke();
+      midnightTime += secondsInDay
+    }
+
+    context.restore();
+
 // ===== 6hr tick lines
-    var tickCount = Math.round(width / (stepSize*6));
+    /*var tickCount = Math.round(width / (stepSize*6));
     context.save();
     context.beginPath();
     context.strokeStyle = 'grey';
@@ -517,7 +545,7 @@ if (this.config.showGraphCloud) {
       context.lineTo(i * (stepSize*6), height - 7);
       context.stroke();
     }
-    context.restore();
+    context.restore();*/
 
 // ========= graph of temp
     if (this.config.showGraphTemp) {
