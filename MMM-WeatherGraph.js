@@ -431,7 +431,6 @@ Module.register("MMM-WeatherGraph", {
 
       context.save();
       context.beginPath();
-      context.moveTo(0, height);
 
       var intensity;
       for (i = 0; i < data.length; i++) {
@@ -443,8 +442,14 @@ Module.register("MMM-WeatherGraph", {
             intensity = (this.weatherData.hourly[i].rain["1h"] * height * RainScale) + 4;   // make trace stand out
           }
         }
+        
+        if (i === 0) {          
+          context.moveTo(0, height - intensity);
+        }
+
         context.lineTo(i * stepSize, height - intensity);
       }
+      
       context.lineTo(width, height);
       context.closePath();
 
@@ -459,8 +464,8 @@ Module.register("MMM-WeatherGraph", {
       context.save();
 
       context.beginPath();
-      context.moveTo(0, height);
       var intensity;
+
       for (i = 0; i < data.length; i++) {
         intensity = 0;
         if (this.weatherData.hourly[i].snow ) {
@@ -468,8 +473,14 @@ Module.register("MMM-WeatherGraph", {
             intensity = (this.weatherData.hourly[i].snow["1h"] * height * RainScale) + 4;   // make trace stand out
           }
         }
+
+        if (i === 0) {          
+          context.moveTo(0, height - intensity);
+        }
+
         context.lineTo(i * stepSize, height - intensity);
       }
+
       context.lineTo(width, height);
       context.closePath();
 
@@ -556,7 +567,6 @@ if (this.config.showGraphCloud) {
       context.fillStyle = this.config.graphTempColor;
       context.lineWidth = 1;
       context.beginPath();
-      context.moveTo(0, height);
 
       var stepSizeTemp = Math.round(width / (graphHours-1));
       var tempX;
@@ -565,6 +575,10 @@ if (this.config.showGraphCloud) {
       for (i = 0; i < graphHours; i++) {
         tempX = i * stepSizeTemp;
         tempY = height - (this.weatherData.hourly[i].temp-precipGraphYMin)*precipGraphPixelsPerDegree;
+
+        if (i === 0) {          
+          context.moveTo(0, tempY);
+        }
 
         context.lineTo( tempX, tempY );   // line from last hour to this hour
         context.stroke();
@@ -603,7 +617,6 @@ if (this.config.showGraphCloud) {
       context.lineWidth = 1;
 
       context.beginPath();
-      context.moveTo(0, height);
 
       var stepSizeTemp = Math.round(width / (graphHours-1));
       var tempX;
@@ -618,6 +631,10 @@ if (this.config.showGraphCloud) {
       for (i = 0; i < (graphHours); i++) {    // wind line graph
         tempX = i * stepSizeTemp;
         tempY = height - ((this.weatherData.hourly[i].wind_speed * windGraphScale) + 5);
+
+        if (i === 0) {          
+          context.moveTo(0, tempY);
+        }
 
         context.lineTo( tempX, tempY );       // line from last hour to this hour
         context.stroke();
@@ -661,7 +678,6 @@ if (this.config.showGraphCloud) {
       context.lineWidth = 1;
 
       context.beginPath();
-      context.moveTo(0, height);
 
       var stepSizeTemp = Math.round(width / (graphHours-1));
       var tempX;
@@ -672,6 +688,10 @@ if (this.config.showGraphCloud) {
       for (i = 0; i < (graphHours); i++) {    // line graph
         tempX = i * stepSizeTemp;
         tempY = height - ((this.weatherData.hourly[i].humidity * humidGraphScale) + 5);
+
+        if (i === 0) {          
+          context.moveTo(0, tempY);
+        }
 
         context.lineTo( tempX, tempY );       // line from last hour to this hour
         context.stroke();
