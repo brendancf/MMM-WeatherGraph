@@ -106,7 +106,7 @@ Module.register("MMM-WeatherGraph", {
     var url = this.config.apiBase+'appid='+this.config.apiKey+'&lat='+this.config.latitude+'&lon='+this.config.longitude+'&units='+units+'&lang='+this.config.language;
 
     if (this.config.debug) {
-      console.log('Query URL: ', url);
+      Log.info('Query URL: ', url);
     }
 
     if (this.config.data) {
@@ -119,7 +119,7 @@ Module.register("MMM-WeatherGraph", {
 
   processWeather: function (data) {
     if (this.config.debug) {
-      console.log('weather data', data);
+      Log.info('weather data', data);
     }
     this.loaded = true;
     this.weatherData = data;
@@ -130,7 +130,7 @@ Module.register("MMM-WeatherGraph", {
 
   processWeatherError: function (error) {
     if (this.config.debug) {
-      console.log('process weather error', error);
+      Log.info('process weather error', error);
     }
     // try later
     this.scheduleUpdate();
@@ -449,7 +449,7 @@ Module.register("MMM-WeatherGraph", {
 
         context.lineTo(i * stepSize, height - intensity);
       }
-      
+
       context.lineTo(width, height);
       context.closePath();
 
@@ -894,7 +894,7 @@ if (this.config.showGraphCloud) {
     navigator.geolocation.getCurrentPosition(
       function (location) {
         if (self.config.debug) {
-          console.log("geolocation success", location);
+          Log.info("geolocation success", location);
         }
         self.config.latitude  = location.coords.latitude;
         self.config.longitude = location.coords.longitude;
@@ -902,7 +902,7 @@ if (this.config.showGraphCloud) {
       },
       function (error) {
         if (self.config.debug) {
-          console.log("geolocation error", error);
+          Log.info("geolocation error", error);
         }
         self.geoLocationLookupFailed = true;
         self.updateDom(self.config.animationSpeed);
