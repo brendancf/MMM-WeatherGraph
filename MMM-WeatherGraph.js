@@ -308,7 +308,8 @@ Module.register("MMM-WeatherGraph", {
     element.width  = width;
     element.height = height;
     var context = element.getContext('2d');
-    var stepSize = (width / graphHours);  // horizontal pixels per hour
+    var stepSize = (width / (graphHours - 1));  // horizontal pixels per hour
+    
 
 // ======= shade blocks for daylight hours  (grey=day, black=night)
     var now = new Date();
@@ -453,10 +454,10 @@ Module.register("MMM-WeatherGraph", {
       context.lineTo(width, height);
       context.closePath();
 
-      context.strokeStyle = '#c4dfe380';
+      context.strokeStyle = '#56a3be80';
       context.stroke();
 
-      context.fillStyle = '#c4dfe380';
+      context.fillStyle = '#56a3be80';
       context.fill();
       context.restore();
 
@@ -568,7 +569,7 @@ if (this.config.showGraphCloud) {
       context.lineWidth = 1;
       context.beginPath();
 
-      var stepSizeTemp = Math.round(width / (graphHours-1));
+      var stepSizeTemp = width / (graphHours-1);
       var tempX;
       var tempY;
 
@@ -618,7 +619,7 @@ if (this.config.showGraphCloud) {
 
       context.beginPath();
 
-      var stepSizeTemp = Math.round(width / (graphHours-1));
+      var stepSizeTemp = width / (graphHours-1);
       var tempX;
       var tempY;
 
@@ -679,7 +680,7 @@ if (this.config.showGraphCloud) {
 
       context.beginPath();
 
-      var stepSizeTemp = Math.round(width / (graphHours-1));
+      var stepSizeTemp = width / (graphHours-1);
       var tempX;
       var tempY;
 
