@@ -335,6 +335,8 @@ Module.register("MMM-WeatherGraph", {
     // seconds in day 86400
     const secondsInDay = 86400
     const maxDays = 3
+    
+    var data = this.weatherData.hourly; 
 
     for (i = 0; i < maxDays; i++) {                // 3 days ([0]..[2])
       timeUntilSunrise = (this.weatherData.daily[i].sunrise - now)/60/60;
@@ -426,75 +428,7 @@ Module.register("MMM-WeatherGraph", {
       context.restore();
     }
 
-// ====== graph of rain / snow
-    if (this.config.showGraphPrecip) {
-      var data = this.weatherData.hourly;   // mm of liquid water per hour
-
-      context.save();
-      context.beginPath();
-
-      var intensity;
-      for (i = 0; i < data.length; i++) {
-        intensity = 0;
-        var RainScale = 0.2;   // OpenWeatherMap scale - mm per hour
-
-        if (this.weatherData.hourly[i].rain ) {
-          if (this.weatherData.hourly[i].rain["1h"] ) {
-            intensity = (this.weatherData.hourly[i].rain["1h"] * height * RainScale) + 4;   // make trace stand out
-          }
-        }
-        
-        if (i === 0) {          
-          context.moveTo(0, height - intensity);
-        }
-
-        context.lineTo(i * stepSize, height - intensity);
-      }
-
-      context.lineTo(width, height);
-      context.closePath();
-
-      context.strokeStyle = '#56a3be80';
-      context.stroke();
-
-      context.fillStyle = '#56a3be80';
-      context.fill();
-      context.restore();
-
-// ====== graph of snow 
-      context.save();
-
-      context.beginPath();
-      var intensity;
-
-      for (i = 0; i < data.length; i++) {
-        intensity = 0;
-        if (this.weatherData.hourly[i].snow ) {
-          if (this.weatherData.hourly[i].snow["1h"] ) {
-            intensity = (this.weatherData.hourly[i].snow["1h"] * height * RainScale) + 4;   // make trace stand out
-          }
-        }
-
-        if (i === 0) {          
-          context.moveTo(0, height - intensity);
-        }
-
-        context.lineTo(i * stepSize, height - intensity);
-      }
-
-      context.lineTo(width, height);
-      context.closePath();
-
-      context.strokeStyle = '#c392c180';
-      context.stroke();
-
-      context.fillStyle = '#c392c180';
-      context.fill();
-      context.restore();
-    }
-
-
-
+    
 // ========= graph of Cloud Cover
 if (this.config.showGraphCloud) {
   var cloudGraphScale = height/110;
@@ -518,6 +452,80 @@ if (this.config.showGraphCloud) {
   context.fill();
   context.restore();
 }
+
+// ====== graph of rain / snow
+    if (this.config.showGraphPrecip) {
+       // mm of liquid water per hour
+
+      // Rain Filled
+      context.save();
+      context.beginPath();
+      context.lineWidth = 2;
+
+      var intensity;
+      for (i = 0; i < data.length; i++) {
+        intensity = 0;
+        var RainScale = 0.2;   // OpenWeatherMap scale - mm per hour
+
+        if (this.weatherData.hourly[i].rain ) {
+          if (this.weatherData.hourly[i].rain["1h"] ) {
+            intensity = (this.weatherData.hourly[i].rain["1h"] * height * RainScale) + 4;   // make trace stand out
+          }
+        }
+        
+        if (i === 0) {          
+          context.moveTo(0, height - intensity);
+        }
+
+        context.lineTo(i * stepSize, height - intensity);
+      }
+
+      context.lineTo(width, height);
+      context.closePath();
+
+      context.strokeStyle = '#7dc6e5';
+      context.stroke();
+
+      context.fillStyle = '#56a3be40';
+      context.fill();
+      context.restore();
+
+
+      // Rain line
+
+// ====== graph of snow 
+      context.save();
+
+      context.beginPath();
+      context.lineWidth = 2;
+      var intensity;
+
+      for (i = 0; i < data.length; i++) {
+        intensity = 0;
+        if (this.weatherData.hourly[i].snow ) {
+          if (this.weatherData.hourly[i].snow["1h"] ) {
+            intensity = (this.weatherData.hourly[i].snow["1h"] * height * RainScale) + 4;   // make trace stand out
+          }
+        }
+
+        if (i === 0) {          
+          context.moveTo(0, height - intensity);
+        }
+
+        context.lineTo(i * stepSize, height - intensity);
+      }
+
+      context.lineTo(width, height);
+      context.closePath();
+
+      context.strokeStyle = '#c392c1';
+      context.stroke();
+
+      context.fillStyle = '#c392c140';
+      context.fill();
+      context.restore();
+    }
+
 
 // ====== Day divider tick lines
 
