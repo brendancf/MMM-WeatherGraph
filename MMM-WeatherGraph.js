@@ -453,6 +453,42 @@ if (this.config.showGraphCloud) {
   context.restore();
 }
 
+if (this.config.showGraphPrecipChance) {
+  context.save();
+  context.beginPath();
+  context.moveTo(0, height);
+  context.lineWidth = 2;
+  var firstNonZero = true;
+
+  var intensity;
+  for (i = 0; i < data.length; i++) {
+    intensity = 0;
+
+    if (this.weatherData.hourly[i].pop ) {
+        intensity = (this.weatherData.hourly[i].pop * height);  
+    }
+    
+    if (firstNonZero) {          
+      context.moveTo(0, height - intensity);
+      firstNonZero = false;
+    }
+
+
+    context.lineTo(i * stepSize, height - intensity);
+  }
+
+  context.lineTo(width, height);
+  context.lineTo(0, height);
+  context.closePath();
+
+  context.strokeStyle = '#7dc6e5';
+  context.stroke();
+
+  context.fillStyle = '#56a3be40';
+  context.fill();
+  context.restore();
+}
+
 // ====== graph of rain / snow
     if (this.config.showGraphPrecip) {
        // mm of liquid water per hour
@@ -460,7 +496,9 @@ if (this.config.showGraphCloud) {
       // Rain Filled
       context.save();
       context.beginPath();
+      context.moveTo(0, height);
       context.lineWidth = 2;
+      var firstNonZero = true;
 
       var intensity;
       for (i = 0; i < data.length; i++) {
@@ -473,14 +511,16 @@ if (this.config.showGraphCloud) {
           }
         }
         
-        if (i === 0) {          
+        if (firstNonZero) {          
           context.moveTo(0, height - intensity);
+          firstNonZero = false;
         }
 
         context.lineTo(i * stepSize, height - intensity);
       }
 
       context.lineTo(width, height);
+      context.lineTo(0, height);
       context.closePath();
 
       context.strokeStyle = '#7dc6e5';
@@ -497,6 +537,7 @@ if (this.config.showGraphCloud) {
       context.save();
 
       context.beginPath();
+      context.moveTo(0, height);
       context.lineWidth = 2;
       var intensity;
 
@@ -516,6 +557,7 @@ if (this.config.showGraphCloud) {
       }
 
       context.lineTo(width, height);
+      context.lineTo(0, height);
       context.closePath();
 
       context.strokeStyle = '#c392c1';
